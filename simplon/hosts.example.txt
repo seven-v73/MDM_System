@@ -1,0 +1,4 @@
+# Une IP ou un nom DNS par ligne
+192.168.10.21
+192.168.10.22
+PAR-S1-PC03.simplon.local
