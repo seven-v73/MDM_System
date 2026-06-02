@@ -1,6 +1,8 @@
 # Seven Control
 
-Seven Control est une couche d'exploitation pour piloter un parc de postes apprenants avec Veyon comme moteur technique:
+Seven Control est une adaptation operationnelle basee sur Veyon, orientee gestion de parc apprenant.
+
+Elle ajoute une couche d'exploitation pour piloter un parc de postes apprenants avec Veyon comme moteur technique:
 
 - inventorier les postes par campus, salle ou promo;
 - importer ces postes dans l'annuaire integre Veyon;

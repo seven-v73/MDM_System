@@ -1,11 +1,19 @@
-# Veyon - Virtual Eye On Networks
+# Seven Control
 
-[![.github/workflows/build.yml](https://github.com/veyon/veyon/actions/workflows/build.yml/badge.svg?branch=4.5)](https://github.com/veyon/veyon/actions/workflows/build.yml)
-[![Latest stable release](https://img.shields.io/github/release/veyon/veyon.svg?maxAge=3600)](https://github.com/veyon/veyon/releases)
-[![Overall downloads on Github](https://img.shields.io/github/downloads/veyon/veyon/total.svg?maxAge=3600)](https://github.com/veyon/veyon/releases)
-[![Documentation Status](https://readthedocs.org/projects/veyon/badge/?version=latest)](https://docs.veyon.io/)
-[![Localise on Transifex](https://img.shields.io/badge/localise-on_transifex-green.svg)](https://app.transifex.com/veyon-solutions/veyon/)
 [![license](https://img.shields.io/badge/license-GPLv2-green.svg)](LICENSE)
+
+Seven Control est une adaptation operationnelle basee sur Veyon, orientee gestion de parc apprenant.
+
+Le moteur technique reste Veyon. Les outils Seven Control ajoutent une couche d'exploitation pour inventorier, verifier, verrouiller et administrer plus facilement des postes apprenants.
+
+Voir la documentation Seven Control: [seven-control/README.md](seven-control/README.md).
+
+
+## Upstream
+
+Ce depot conserve l'historique du projet Veyon afin de garder la tracabilite, respecter l'origine du code et faciliter les futures mises a jour.
+
+Projet original: Veyon - Virtual Eye On Networks.
 
 
 ## What is Veyon?
