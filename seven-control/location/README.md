@@ -74,6 +74,53 @@ seven-control-location-admin generate-token
 seven-control-location-admin generate-token --bytes 48
 ```
 
+Generer un fichier de configuration agent depuis le poste admin:
+
+```bash
+seven-control-location-admin make-agent-config \
+  --target-os linux \
+  --server-url https://seven-control.example.org \
+  --enroll-token TOKEN_ENROLEMENT \
+  -o location-agent-linux.env
+
+seven-control-location-admin make-agent-config \
+  --target-os windows \
+  --server-url https://seven-control.example.org \
+  --enroll-token TOKEN_ENROLEMENT \
+  -o location-agent-windows.env
+
+seven-control-location-admin make-agent-config \
+  --target-os macos \
+  --server-url https://seven-control.example.org \
+  --enroll-token TOKEN_ENROLEMENT \
+  -o location-agent-macos.env
+```
+
+Les fichiers generes sont crees en mode `0600` quand `-o` cible un fichier local.
+
+Si le serveur est expose en HTTPS, vous pouvez verrouiller l'empreinte SHA-256 du certificat cote agent:
+
+```bash
+seven-control-location-admin make-agent-config \
+  --target-os linux \
+  --server-url https://seven-control.example.org \
+  --enroll-token TOKEN_ENROLEMENT \
+  --server-cert-sha256 SHA256_DU_CERTIFICAT \
+  -o location-agent-linux.env
+```
+
+Pour reduire les donnees collectees, desactivez les sources inutiles:
+
+```bash
+seven-control-location-admin make-agent-config \
+  --target-os linux \
+  --server-url https://seven-control.example.org \
+  --enroll-token TOKEN_ENROLEMENT \
+  --no-wifi \
+  --no-public-ip \
+  -o location-agent-minimal.env
+```
+
 ## Agent apprenant
 
 ### Linux avec systemd
@@ -200,6 +247,7 @@ Avant activation massive:
 4. Journaliser chaque consultation admin.
 5. Definir une duree de conservation courte.
 6. Desactiver la localisation sur les machines hors perimetre.
+7. Minimiser les sources collectees avec `SEVEN_CONTROL_COLLECT_*` selon le besoin reel.
 
 ## API admin
 

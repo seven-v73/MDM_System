@@ -154,6 +154,42 @@ def export_geojson(devices, output):
 		target.write("\n")
 
 
+def notice_path_for_os(target_os):
+	if target_os == "windows":
+		return r"C:\ProgramData\SevenControl\location-notice.accepted"
+	if target_os == "macos":
+		return "/Library/Application Support/SevenControl/location-notice.accepted"
+	return "/etc/seven-control/location-notice.accepted"
+
+
+def make_agent_config(args):
+	token = args.enroll_token or os.environ.get("SEVEN_CONTROL_LOCATION_TOKEN", "")
+	if not token:
+		raise SystemExit("Token d'enrolement manquant: utilisez --enroll-token ou SEVEN_CONTROL_LOCATION_TOKEN.")
+
+	lines = [
+		f"SEVEN_CONTROL_LOCATION_SERVER_URL={args.server}",
+		f"SEVEN_CONTROL_LOCATION_TOKEN={token}",
+		f"SEVEN_CONTROL_DEVICE_NAME={args.device_name}",
+		f"SEVEN_CONTROL_DEVICE_ID={args.device_id}",
+		f"SEVEN_CONTROL_LOCATION_NOTICE_FILE={args.notice_file or notice_path_for_os(args.target_os)}",
+		f"SEVEN_CONTROL_PUBLIC_IP_URL={args.public_ip_url}",
+		f"SEVEN_CONTROL_LOCATION_SERVER_CERT_SHA256={args.server_cert_sha256}",
+		f"SEVEN_CONTROL_COLLECT_GPS={1 if args.collect_gps else 0}",
+		f"SEVEN_CONTROL_COLLECT_WIFI={1 if args.collect_wifi else 0}",
+		f"SEVEN_CONTROL_COLLECT_LOCAL_IPS={1 if args.collect_local_ips else 0}",
+		f"SEVEN_CONTROL_COLLECT_PUBLIC_IP={1 if args.collect_public_ip else 0}",
+	]
+	content = "\n".join(lines) + "\n"
+	if args.output == "-":
+		sys.stdout.write(content)
+	else:
+		flags = os.O_WRONLY | os.O_CREAT | os.O_TRUNC
+		fd = os.open(args.output, flags, 0o600)
+		with os.fdopen(fd, "w", encoding="utf-8") as handle:
+			handle.write(content)
+
+
 def main():
 	load_env_file(os.environ.get("SEVEN_CONTROL_LOCATION_CONFIG", default_config_path()))
 
@@ -185,11 +221,30 @@ def main():
 	token_parser = subparsers.add_parser("generate-token", help="Generer un token fort")
 	token_parser.add_argument("--bytes", type=int, default=32)
 
+	agent_config_parser = subparsers.add_parser("make-agent-config", help="Generer un fichier .env agent")
+	agent_config_parser.add_argument("--target-os", choices=("linux", "windows", "macos"), default="linux")
+	agent_config_parser.add_argument("--server-url", dest="server", required=True)
+	agent_config_parser.add_argument("--enroll-token", default="")
+	agent_config_parser.add_argument("--device-name", default="")
+	agent_config_parser.add_argument("--device-id", default="")
+	agent_config_parser.add_argument("--notice-file", default="")
+	agent_config_parser.add_argument("--public-ip-url", default="")
+	agent_config_parser.add_argument("--server-cert-sha256", default="")
+	agent_config_parser.add_argument("--no-gps", dest="collect_gps", action="store_false", default=True)
+	agent_config_parser.add_argument("--no-wifi", dest="collect_wifi", action="store_false", default=True)
+	agent_config_parser.add_argument("--no-local-ips", dest="collect_local_ips", action="store_false", default=True)
+	agent_config_parser.add_argument("--no-public-ip", dest="collect_public_ip", action="store_false", default=True)
+	agent_config_parser.add_argument("-o", "--output", default="-")
+
 	args = parser.parse_args()
 	if args.command == "generate-token":
 		if args.bytes < 16:
 			raise SystemExit("--bytes doit etre >= 16.")
 		print(secrets.token_urlsafe(args.bytes))
+		return
+
+	if args.command == "make-agent-config":
+		make_agent_config(args)
 		return
 
 	if not args.token:

@@ -5,10 +5,12 @@ import json
 import os
 import platform
 import socket
+import ssl
 import subprocess
 import sys
 import urllib.error
 import urllib.request
+from urllib.parse import urlparse
 
 
 def default_config_path():
@@ -45,6 +47,13 @@ def load_env_file(path):
 
 def env(name, default=""):
 	return os.environ.get(name, default).strip()
+
+
+def env_bool(name, default=True):
+	value = env(name)
+	if not value:
+		return default
+	return value.lower() in ("1", "true", "yes", "on")
 
 
 def run_command(args, timeout=4):
@@ -223,7 +232,38 @@ def public_ip():
 		return ""
 
 
+def normalized_fingerprint(value):
+	return value.replace(":", "").replace(" ", "").lower()
+
+
+def server_certificate_fingerprint(url):
+	parsed = urlparse(url)
+	if parsed.scheme != "https":
+		return ""
+	host = parsed.hostname
+	port = parsed.port or 443
+	if not host:
+		return ""
+	context = ssl.create_default_context()
+	with socket.create_connection((host, port), timeout=8) as sock:
+		with context.wrap_socket(sock, server_hostname=host) as tls_sock:
+			cert = tls_sock.getpeercert(binary_form=True)
+	return hashlib.sha256(cert).hexdigest()
+
+
+def verify_server_fingerprint(url):
+	expected = env("SEVEN_CONTROL_LOCATION_SERVER_CERT_SHA256")
+	if not expected:
+		return
+	actual = server_certificate_fingerprint(url)
+	if not actual:
+		raise RuntimeError("L'empreinte TLS est configuree mais l'URL serveur n'est pas HTTPS.")
+	if normalized_fingerprint(expected) != actual:
+		raise RuntimeError("Empreinte TLS serveur inattendue.")
+
+
 def post_json(url, token, payload):
+	verify_server_fingerprint(url)
 	body = json.dumps(payload, sort_keys=True).encode("utf-8")
 	request = urllib.request.Request(
 		url,
@@ -260,19 +300,31 @@ def diagnose(server_url, token, notice_file):
 	else:
 		print(f"Notice file: manquant ({notice_file})")
 		status = 1
-	print(f"Local IPs: {len(local_ips())}")
-	print(f"Wi-Fi networks visible: {len(wifi_scan())}")
-	print(f"GPS available: {'yes' if gps_position() else 'no'}")
+	print(f"Collect GPS: {'yes' if env_bool('SEVEN_CONTROL_COLLECT_GPS', True) else 'no'}")
+	print(f"Collect Wi-Fi: {'yes' if env_bool('SEVEN_CONTROL_COLLECT_WIFI', True) else 'no'}")
+	print(f"Collect local IPs: {'yes' if env_bool('SEVEN_CONTROL_COLLECT_LOCAL_IPS', True) else 'no'}")
+	print(f"Collect public IP: {'yes' if env_bool('SEVEN_CONTROL_COLLECT_PUBLIC_IP', True) else 'no'}")
+	print(f"Local IPs: {len(local_ips()) if env_bool('SEVEN_CONTROL_COLLECT_LOCAL_IPS', True) else 0}")
+	print(f"Wi-Fi networks visible: {len(wifi_scan()) if env_bool('SEVEN_CONTROL_COLLECT_WIFI', True) else 0}")
+	print(f"GPS available: {'yes' if env_bool('SEVEN_CONTROL_COLLECT_GPS', True) and gps_position() else 'no'}")
 	if server_url:
 		try:
+			verify_server_fingerprint(server_url)
 			with urllib.request.urlopen(server_url.rstrip("/") + "/api/status", timeout=5) as response:
 				print(f"Server reachability: HTTP {response.status}")
+			if env("SEVEN_CONTROL_LOCATION_SERVER_CERT_SHA256"):
+				print("TLS fingerprint: ok")
 		except urllib.error.HTTPError as exc:
 			if exc.code in (403, 503):
 				print(f"Server reachability: HTTP {exc.code} (reachable, admin endpoint protected)")
+				if env("SEVEN_CONTROL_LOCATION_SERVER_CERT_SHA256"):
+					print("TLS fingerprint: ok")
 			else:
 				print(f"Server reachability: failed (HTTP {exc.code})")
 				status = 1
+		except RuntimeError as exc:
+			print(f"TLS fingerprint: failed ({exc})")
+			status = 1
 		except (OSError, urllib.error.URLError) as exc:
 			print(f"Server reachability: failed ({exc})")
 			status = 1
@@ -303,7 +355,7 @@ def main():
 		print(f"Localisation non activee: fichier d'information manquant: {notice_file}", file=sys.stderr)
 		return 3
 
-	position = gps_position()
+	position = gps_position() if env_bool("SEVEN_CONTROL_COLLECT_GPS", True) else None
 	payload = {
 		"schema": "seven-control-location-v1",
 		"timestamp": dt.datetime.now(dt.timezone.utc).isoformat(),
@@ -313,9 +365,9 @@ def main():
 		"os": platform.platform(),
 		"sources": {
 			"gps": position,
-			"wifi": wifi_scan(),
-			"local_ips": local_ips(),
-			"public_ip": public_ip(),
+			"wifi": wifi_scan() if env_bool("SEVEN_CONTROL_COLLECT_WIFI", True) else [],
+			"local_ips": local_ips() if env_bool("SEVEN_CONTROL_COLLECT_LOCAL_IPS", True) else [],
+			"public_ip": public_ip() if env_bool("SEVEN_CONTROL_COLLECT_PUBLIC_IP", True) else "",
 		},
 		"notice": {
 			"enabled": True,
