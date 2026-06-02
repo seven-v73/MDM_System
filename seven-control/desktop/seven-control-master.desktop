@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Exec=/usr/local/bin/seven-control-master
+Icon=veyon-master
+Terminal=false
+Name=Seven Control Master
+Comment=Monitor and control learner computers
+Categories=Qt;Education;Network;RemoteAccess;
