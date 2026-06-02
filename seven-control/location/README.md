@@ -23,6 +23,18 @@ sudo install -m 0600 seven-control/location/server.env.example /etc/seven-contro
 sudo nano /etc/seven-control/location-server.env
 ```
 
+Ou generer une configuration avec tokens forts:
+
+```bash
+sudo seven-control-location-bootstrap-server
+```
+
+Pour exposer le serveur a d'autres machines du reseau, choisissez explicitement l'adresse d'ecoute:
+
+```bash
+sudo seven-control-location-bootstrap-server --bind 0.0.0.0 --port 8765
+```
+
 Demarrer le serveur:
 
 ```bash
@@ -92,6 +104,12 @@ Test manuel:
 sudo systemctl start seven-control-location-agent.service
 ```
 
+Diagnostic manuel:
+
+```bash
+sudo seven-control-location-agent --diagnose
+```
+
 ### Windows
 
 Prerequis:
@@ -128,6 +146,12 @@ Si le test manuel ne trouve pas `run-location-agent.ps1`, lancez directement:
 python "C:\Program Files\SevenControl\seven_control_location_agent.py"
 ```
 
+Diagnostic:
+
+```powershell
+python "C:\Program Files\SevenControl\seven_control_location_agent.py" --diagnose
+```
+
 ### macOS
 
 Prerequis:
@@ -148,6 +172,12 @@ Test manuel:
 
 ```bash
 sudo /usr/local/bin/python3 /usr/local/seven-control/location/seven_control_location_agent.py
+```
+
+Diagnostic:
+
+```bash
+sudo /usr/local/bin/python3 /usr/local/seven-control/location/seven_control_location_agent.py --diagnose
 ```
 
 ### Linux sans Arch/sevenOS

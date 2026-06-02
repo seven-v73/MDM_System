@@ -156,6 +156,7 @@ La localisation precise necessite un agent cote machine apprenant et un cadre d'
 seven-control-location-agent
 seven-control-location-server
 seven-control-location-admin
+seven-control-location-bootstrap-server
 ```
 
 Le module collecte uniquement les sources disponibles: GPS via `gpsd` si present, Wi-Fi via `nmcli` sur Linux, `netsh wlan` sur Windows, `airport` sur macOS, IP locale et IP publique optionnelle. Sur beaucoup de PC portables, il n'y a pas de GPS materiel.

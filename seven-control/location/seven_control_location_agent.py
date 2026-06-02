@@ -239,11 +239,61 @@ def post_json(url, token, payload):
 		return response.status, response.read().decode("utf-8", errors="replace")
 
 
+def diagnose(server_url, token, notice_file):
+	status = 0
+	print("Seven Control Location Agent diagnostic")
+	print(f"OS: {platform.platform()}")
+	print(f"Device ID: {device_id()}")
+	print(f"Device name: {env('SEVEN_CONTROL_DEVICE_NAME', socket.gethostname())}")
+	if server_url:
+		print(f"Server URL: {server_url}")
+	else:
+		print("Server URL: manquant")
+		status = 1
+	if token:
+		print("Enroll token: configure")
+	else:
+		print("Enroll token: manquant")
+		status = 1
+	if os.path.exists(notice_file):
+		print(f"Notice file: present ({notice_file})")
+	else:
+		print(f"Notice file: manquant ({notice_file})")
+		status = 1
+	print(f"Local IPs: {len(local_ips())}")
+	print(f"Wi-Fi networks visible: {len(wifi_scan())}")
+	print(f"GPS available: {'yes' if gps_position() else 'no'}")
+	if server_url:
+		try:
+			with urllib.request.urlopen(server_url.rstrip("/") + "/api/status", timeout=5) as response:
+				print(f"Server reachability: HTTP {response.status}")
+		except urllib.error.HTTPError as exc:
+			if exc.code in (403, 503):
+				print(f"Server reachability: HTTP {exc.code} (reachable, admin endpoint protected)")
+			else:
+				print(f"Server reachability: failed (HTTP {exc.code})")
+				status = 1
+		except (OSError, urllib.error.URLError) as exc:
+			print(f"Server reachability: failed ({exc})")
+			status = 1
+	return status
+
+
 def main():
 	load_env_file(env("SEVEN_CONTROL_LOCATION_CONFIG", default_config_path()))
+	if len(sys.argv) > 2 or (len(sys.argv) == 2 and sys.argv[1] not in ("--diagnose", "--help", "-h")):
+		print("Usage: seven_control_location_agent.py [--diagnose]", file=sys.stderr)
+		return 2
 	server_url = env("SEVEN_CONTROL_LOCATION_SERVER_URL")
 	token = env("SEVEN_CONTROL_LOCATION_TOKEN")
 	notice_file = env("SEVEN_CONTROL_LOCATION_NOTICE_FILE", default_notice_path())
+
+	if len(sys.argv) == 2 and sys.argv[1] in ("--help", "-h"):
+		print("Usage: seven_control_location_agent.py [--diagnose]")
+		return 0
+
+	if len(sys.argv) == 2 and sys.argv[1] == "--diagnose":
+		return diagnose(server_url, token, notice_file)
 
 	if not server_url or not token:
 		print("SEVEN_CONTROL_LOCATION_SERVER_URL et SEVEN_CONTROL_LOCATION_TOKEN sont requis.", file=sys.stderr)

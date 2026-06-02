@@ -48,6 +48,7 @@ fi
 "${sudo_cmd[@]}" install -m 0755 "$tool_root/location/seven_control_location_agent.py" "$prefix/location/seven_control_location_agent.py"
 "${sudo_cmd[@]}" install -m 0755 "$tool_root/location/seven_control_location_server.py" "$prefix/location/seven_control_location_server.py"
 "${sudo_cmd[@]}" install -m 0755 "$tool_root/location/seven_control_location_admin.py" "$prefix/location/seven_control_location_admin.py"
+"${sudo_cmd[@]}" install -m 0755 "$tool_root/location/bootstrap-location-server.sh" "$prefix/location/bootstrap-location-server.sh"
 "${sudo_cmd[@]}" install -m 0644 "$tool_root/README.md" "$prefix/README.md"
 "${sudo_cmd[@]}" install -m 0644 "$tool_root/arch/README.md" "$prefix/arch/README.md"
 "${sudo_cmd[@]}" install -m 0644 "$tool_root/linux/README.md" "$prefix/linux/README.md"
@@ -80,6 +81,7 @@ fi
 "${sudo_cmd[@]}" ln -sf "$prefix/location/seven_control_location_agent.py" /usr/local/bin/seven-control-location-agent
 "${sudo_cmd[@]}" ln -sf "$prefix/location/seven_control_location_server.py" /usr/local/bin/seven-control-location-server
 "${sudo_cmd[@]}" ln -sf "$prefix/location/seven_control_location_admin.py" /usr/local/bin/seven-control-location-admin
+"${sudo_cmd[@]}" ln -sf "$prefix/location/bootstrap-location-server.sh" /usr/local/bin/seven-control-location-bootstrap-server
 
 for legacy_command in \
 	simplon-lock \
@@ -93,7 +95,8 @@ for legacy_command in \
 	simplon-veyon-configurator \
 	simplon-location-agent \
 	simplon-location-server \
-	simplon-location-admin
+	simplon-location-admin \
+	simplon-location-bootstrap-server
 do
 	if [ -L "/usr/local/bin/$legacy_command" ]; then
 		"${sudo_cmd[@]}" rm -f "/usr/local/bin/$legacy_command"
@@ -106,4 +109,4 @@ if ! /usr/local/bin/seven-control-configurator --version | grep -q 'admin-waylan
 fi
 
 printf 'Outils Seven Control installes dans %s.\n' "$prefix"
-printf 'Commandes disponibles: seven-control-lock, seven-control-import-inventory, seven-control-apply-profile, seven-control-validate-inventory, seven-control-locate, seven-control-health-check, seven-control-backup-config, seven-control-master, seven-control-configurator, seven-control-location-agent, seven-control-location-server, seven-control-location-admin\n'
+printf 'Commandes disponibles: seven-control-lock, seven-control-import-inventory, seven-control-apply-profile, seven-control-validate-inventory, seven-control-locate, seven-control-health-check, seven-control-backup-config, seven-control-master, seven-control-configurator, seven-control-location-agent, seven-control-location-server, seven-control-location-admin, seven-control-location-bootstrap-server\n'
