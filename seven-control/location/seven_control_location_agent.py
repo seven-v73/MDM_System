@@ -11,6 +11,38 @@ import urllib.error
 import urllib.request
 
 
+def default_config_path():
+	if os.name == "nt":
+		return r"C:\ProgramData\SevenControl\location-agent.env"
+	if sys.platform == "darwin":
+		return "/Library/Application Support/SevenControl/location-agent.env"
+	return "/etc/seven-control/location-agent.env"
+
+
+def default_notice_path():
+	if os.name == "nt":
+		return r"C:\ProgramData\SevenControl\location-notice.accepted"
+	if sys.platform == "darwin":
+		return "/Library/Application Support/SevenControl/location-notice.accepted"
+	return "/etc/seven-control/location-notice.accepted"
+
+
+def load_env_file(path):
+	try:
+		with open(path, "r", encoding="utf-8") as handle:
+			for raw_line in handle:
+				line = raw_line.strip()
+				if not line or line.startswith("#") or "=" not in line:
+					continue
+				key, value = line.split("=", 1)
+				key = key.strip()
+				value = value.strip().strip('"').strip("'")
+				if key and key not in os.environ:
+					os.environ[key] = value
+	except OSError:
+		return
+
+
 def env(name, default=""):
 	return os.environ.get(name, default).strip()
 
@@ -46,6 +78,22 @@ def device_id():
 	if configured:
 		return configured
 
+	if os.name == "nt":
+		try:
+			import winreg
+			with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography") as key:
+				seed, _ = winreg.QueryValueEx(key, "MachineGuid")
+				return "sc-" + hashlib.sha256(seed.encode("utf-8")).hexdigest()[:16]
+		except OSError:
+			pass
+
+	if sys.platform == "darwin":
+		output = run_command(["ioreg", "-rd1", "-c", "IOPlatformExpertDevice"])
+		for line in output.splitlines():
+			if "IOPlatformUUID" in line and "=" in line:
+				seed = line.split("=", 1)[1].strip().strip('"')
+				return "sc-" + hashlib.sha256(seed.encode("utf-8")).hexdigest()[:16]
+
 	seed = read_first_existing([
 		"/etc/machine-id",
 		"/var/lib/dbus/machine-id",
@@ -54,28 +102,83 @@ def device_id():
 
 
 def local_ips():
+	seen = set()
+	ips = []
+	for info in socket.getaddrinfo(socket.gethostname(), None, family=socket.AF_INET):
+		address = info[4][0]
+		if address and not address.startswith("127.") and address not in seen:
+			seen.add(address)
+			ips.append({"interface": "system", "address": address})
+
 	output = run_command(["ip", "-j", "addr", "show"])
 	if output:
 		try:
 			data = json.loads(output)
-			ips = []
 			for interface in data:
 				name = interface.get("ifname", "")
 				if name == "lo":
 					continue
 				for address in interface.get("addr_info", []):
-					if address.get("family") == "inet":
+					local = address.get("local", "")
+					if address.get("family") == "inet" and local and local not in seen:
+						seen.add(local)
 						ips.append({
 							"interface": name,
-							"address": address.get("local", ""),
+							"address": local,
 						})
 			return [item for item in ips if item["address"]]
 		except json.JSONDecodeError:
-			return []
-	return []
+			return ips
+
+	if os.name == "nt":
+		output = run_command(["ipconfig"])
+		current = "system"
+		for line in output.splitlines():
+			stripped = line.strip()
+			if stripped.endswith(":"):
+				current = stripped[:-1]
+			if "IPv4" in stripped and ":" in stripped:
+				address = stripped.split(":", 1)[1].strip()
+				if address and address not in seen:
+					seen.add(address)
+					ips.append({"interface": current, "address": address})
+
+	return ips
 
 
 def wifi_scan():
+	if os.name == "nt":
+		output = run_command(["netsh", "wlan", "show", "networks", "mode=bssid"], timeout=8)
+		networks = []
+		current = {}
+		for line in output.splitlines():
+			stripped = line.strip()
+			if stripped.startswith("SSID ") and ":" in stripped:
+				if current:
+					networks.append(current)
+				current = {"ssid": stripped.split(":", 1)[1].strip()}
+			elif stripped.startswith("BSSID ") and ":" in stripped:
+				current["bssid"] = stripped.split(":", 1)[1].strip()
+			elif stripped.startswith("Signal") and ":" in stripped:
+				current["signal"] = stripped.split(":", 1)[1].strip().rstrip("%")
+		if current:
+			networks.append(current)
+		return networks[:20]
+
+	if sys.platform == "darwin":
+		airport = "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/Current/Resources/airport"
+		output = run_command([airport, "-s"], timeout=8)
+		networks = []
+		for line in output.splitlines()[1:]:
+			parts = line.split()
+			if len(parts) >= 3:
+				networks.append({
+					"ssid": " ".join(parts[:-5]) if len(parts) > 5 else parts[0],
+					"bssid": parts[-5] if len(parts) > 5 else "",
+					"signal": parts[-4] if len(parts) > 5 else "",
+				})
+		return networks[:20]
+
 	output = run_command(["nmcli", "-t", "-f", "ACTIVE,SSID,BSSID,SIGNAL", "dev", "wifi", "list"], timeout=8)
 	networks = []
 	for line in output.splitlines():
@@ -137,9 +240,10 @@ def post_json(url, token, payload):
 
 
 def main():
+	load_env_file(env("SEVEN_CONTROL_LOCATION_CONFIG", default_config_path()))
 	server_url = env("SEVEN_CONTROL_LOCATION_SERVER_URL")
 	token = env("SEVEN_CONTROL_LOCATION_TOKEN")
-	notice_file = env("SEVEN_CONTROL_LOCATION_NOTICE_FILE", "/etc/seven-control/location-notice.accepted")
+	notice_file = env("SEVEN_CONTROL_LOCATION_NOTICE_FILE", default_notice_path())
 
 	if not server_url or not token:
 		print("SEVEN_CONTROL_LOCATION_SERVER_URL et SEVEN_CONTROL_LOCATION_TOKEN sont requis.", file=sys.stderr)

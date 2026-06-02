@@ -2,10 +2,37 @@
 import datetime as dt
 import json
 import os
+import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
+
+def default_config_path():
+	if os.name == "nt":
+		return r"C:\ProgramData\SevenControl\location-server.env"
+	if sys.platform == "darwin":
+		return "/Library/Application Support/SevenControl/location-server.env"
+	return "/etc/seven-control/location-server.env"
+
+
+def load_env_file(path):
+	try:
+		with open(path, "r", encoding="utf-8") as handle:
+			for raw_line in handle:
+				line = raw_line.strip()
+				if not line or line.startswith("#") or "=" not in line:
+					continue
+				key, value = line.split("=", 1)
+				key = key.strip()
+				value = value.strip().strip('"').strip("'")
+				if key and key not in os.environ:
+					os.environ[key] = value
+	except OSError:
+		return
+
+
+load_env_file(os.environ.get("SEVEN_CONTROL_LOCATION_CONFIG", default_config_path()))
 
 DATA_DIR = Path(os.environ.get("SEVEN_CONTROL_LOCATION_DATA_DIR", "/var/lib/seven-control-location"))
 ENROLL_TOKEN = os.environ.get("SEVEN_CONTROL_LOCATION_TOKEN", "")

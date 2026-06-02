@@ -31,6 +31,17 @@ Pour une machine Arch Linux ou sevenOS base Arch, utilisez le guide dedie:
 
 Details: [arch/README.md](arch/README.md).
 
+## Autres plateformes
+
+Seven Control est organise pour plusieurs environnements:
+
+- Arch/sevenOS: [arch/README.md](arch/README.md)
+- Linux generique: [linux/README.md](linux/README.md)
+- Windows: [windows/README.md](windows/README.md)
+- macOS: [macos/README.md](macos/README.md)
+
+Le poste admin principal reste recommande sous Linux/sevenOS pour les commandes `seven-control-*`. Les postes apprenants peuvent etre Windows ou Linux si Veyon Service est installe, configure et joignable. Le module Seven Control Location fournit aussi un agent Windows et macOS.
+
 ## Inventaire
 
 Avant d'utiliser l'inventaire integre, appliquez le profil Seven Control de base:
@@ -146,7 +157,7 @@ seven-control-location-agent
 seven-control-location-server
 ```
 
-Le module collecte uniquement les sources disponibles: GPS via `gpsd` si present, Wi-Fi via `nmcli`, IP locale et IP publique optionnelle. Sur beaucoup de PC portables, il n'y a pas de GPS materiel.
+Le module collecte uniquement les sources disponibles: GPS via `gpsd` si present, Wi-Fi via `nmcli` sur Linux, `netsh wlan` sur Windows, `airport` sur macOS, IP locale et IP publique optionnelle. Sur beaucoup de PC portables, il n'y a pas de GPS materiel.
 
 Documentation: [location/README.md](location/README.md).
 
