@@ -35,6 +35,33 @@ Lister les machines depuis le serveur:
 curl -H "Authorization: Bearer ADMIN_TOKEN" http://127.0.0.1:8765/api/devices
 ```
 
+Ou avec la CLI admin:
+
+```bash
+SEVEN_CONTROL_LOCATION_ADMIN_TOKEN=ADMIN_TOKEN seven-control-location-admin list
+SEVEN_CONTROL_LOCATION_ADMIN_TOKEN=ADMIN_TOKEN seven-control-location-admin list --stale-minutes 60
+SEVEN_CONTROL_LOCATION_ADMIN_TOKEN=ADMIN_TOKEN seven-control-location-admin status
+SEVEN_CONTROL_LOCATION_ADMIN_TOKEN=ADMIN_TOKEN seven-control-location-admin get sc-xxxxxxxxxxxxxxxx
+SEVEN_CONTROL_LOCATION_ADMIN_TOKEN=ADMIN_TOKEN seven-control-location-admin export-csv positions.csv
+SEVEN_CONTROL_LOCATION_ADMIN_TOKEN=ADMIN_TOKEN seven-control-location-admin export-geojson positions.geojson
+SEVEN_CONTROL_LOCATION_ADMIN_TOKEN=ADMIN_TOKEN seven-control-location-admin audit --limit 50
+```
+
+Purger l'historique plus ancien que 30 jours:
+
+```bash
+SEVEN_CONTROL_LOCATION_ADMIN_TOKEN=ADMIN_TOKEN seven-control-location-admin purge --older-than-days 30
+```
+
+La purge concerne l'historique `events.jsonl`. Le dernier etat par machine reste disponible dans `latest/`.
+
+Generer des tokens forts avant de remplir les fichiers `.env`:
+
+```bash
+seven-control-location-admin generate-token
+seven-control-location-admin generate-token --bytes 48
+```
+
 ## Agent apprenant
 
 ### Linux avec systemd
@@ -143,3 +170,19 @@ Avant activation massive:
 4. Journaliser chaque consultation admin.
 5. Definir une duree de conservation courte.
 6. Desactiver la localisation sur les machines hors perimetre.
+
+## API admin
+
+Endpoints disponibles:
+
+- `GET /api/devices`: dernier etat de toutes les machines.
+- `GET /api/status`: etat du serveur, volume d'evenements et retention.
+- `GET /api/device?id=DEVICE_ID`: dernier etat d'une machine.
+- `GET /api/audit?limit=50`: derniers evenements d'audit.
+- `DELETE /api/events?older_than_days=30`: purge l'historique ancien.
+
+Tous les endpoints admin exigent:
+
+```http
+Authorization: Bearer ADMIN_TOKEN
+```
