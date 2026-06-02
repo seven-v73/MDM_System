@@ -1,0 +1,10 @@
+[Unit]
+Description=Seven Control Location Agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/seven-control/location-agent.env
+ExecStart=/usr/local/bin/seven-control-location-agent
+User=root

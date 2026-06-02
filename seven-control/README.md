@@ -7,6 +7,7 @@ Elle ajoute une couche d'exploitation pour piloter un parc de postes apprenants 
 - inventorier les postes par campus, salle ou promo;
 - importer ces postes dans l'annuaire integre Veyon;
 - verrouiller ou deverrouiller a distance une salle ou une liste de machines.
+- remonter une localisation MDM autorisee via le module Seven Control Location.
 
 Ces outils supposent que Veyon est installe et configure sur des machines administrees par votre organisation. Ne les utilisez pas sur des postes personnels ou hors perimetre d'administration.
 
@@ -117,6 +118,37 @@ Avant une action massive, verifiez la joignabilite:
 ```bash
 seven-control-health-check --location Paris-Salle-1
 ```
+
+## Localiser une machine
+
+Seven Control ne fait pas de geolocalisation GPS. La localisation est operationnelle: salle, campus ou promo declares dans l'inventaire, avec verification de joignabilite reseau.
+
+Rechercher une machine dans l'annuaire Veyon:
+
+```bash
+seven-control-locate PAR-S1-PC01
+seven-control-locate 192.168.10.21
+seven-control-locate AA:BB:CC:DD:EE:01
+```
+
+Rechercher dans un fichier d'inventaire avant import:
+
+```bash
+seven-control-locate PAR-S1-PC01 --inventory seven-control/inventory.example.csv
+```
+
+## Localisation GPS / MDM
+
+La localisation precise necessite un agent cote machine apprenant et un cadre d'administration explicite. Seven Control fournit un module dedie:
+
+```bash
+seven-control-location-agent
+seven-control-location-server
+```
+
+Le module collecte uniquement les sources disponibles: GPS via `gpsd` si present, Wi-Fi via `nmcli`, IP locale et IP publique optionnelle. Sur beaucoup de PC portables, il n'y a pas de GPS materiel.
+
+Documentation: [location/README.md](location/README.md).
 
 ## Deverrouiller une salle
 

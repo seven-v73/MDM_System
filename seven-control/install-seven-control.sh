@@ -36,17 +36,26 @@ if [ "$(id -u)" -ne 0 ]; then
 	sudo_cmd=(sudo)
 fi
 
-"${sudo_cmd[@]}" install -d "$prefix" /usr/local/bin /usr/local/share/applications
+"${sudo_cmd[@]}" install -d "$prefix" "$prefix/location" /usr/local/bin /usr/local/share/applications /usr/local/lib/systemd/system
 "${sudo_cmd[@]}" install -m 0755 "$tool_root/import-inventory.sh" "$prefix/import-inventory.sh"
 "${sudo_cmd[@]}" install -m 0755 "$tool_root/seven-control-lock.sh" "$prefix/seven-control-lock.sh"
 "${sudo_cmd[@]}" install -m 0755 "$tool_root/apply-profile.sh" "$prefix/apply-profile.sh"
 "${sudo_cmd[@]}" install -m 0755 "$tool_root/validate-inventory.sh" "$prefix/validate-inventory.sh"
+"${sudo_cmd[@]}" install -m 0755 "$tool_root/locate-machine.sh" "$prefix/locate-machine.sh"
 "${sudo_cmd[@]}" install -m 0755 "$tool_root/health-check.sh" "$prefix/health-check.sh"
 "${sudo_cmd[@]}" install -m 0755 "$tool_root/backup-config.sh" "$prefix/backup-config.sh"
 "${sudo_cmd[@]}" install -m 0755 "$tool_root/launch-veyon-gui.sh" "$prefix/launch-veyon-gui.sh"
+"${sudo_cmd[@]}" install -m 0755 "$tool_root/location/seven_control_location_agent.py" "$prefix/location/seven_control_location_agent.py"
+"${sudo_cmd[@]}" install -m 0755 "$tool_root/location/seven_control_location_server.py" "$prefix/location/seven_control_location_server.py"
 "${sudo_cmd[@]}" install -m 0644 "$tool_root/README.md" "$prefix/README.md"
+"${sudo_cmd[@]}" install -m 0644 "$tool_root/location/README.md" "$prefix/location/README.md"
+"${sudo_cmd[@]}" install -m 0644 "$tool_root/location/agent.env.example" "$prefix/location/agent.env.example"
+"${sudo_cmd[@]}" install -m 0644 "$tool_root/location/server.env.example" "$prefix/location/server.env.example"
 "${sudo_cmd[@]}" install -m 0644 "$tool_root/inventory.example.csv" "$prefix/inventory.example.csv"
 "${sudo_cmd[@]}" install -m 0644 "$tool_root/hosts.example.txt" "$prefix/hosts.example.txt"
+"${sudo_cmd[@]}" install -m 0644 "$tool_root/location/seven-control-location-agent.service" /usr/local/lib/systemd/system/seven-control-location-agent.service
+"${sudo_cmd[@]}" install -m 0644 "$tool_root/location/seven-control-location-agent.timer" /usr/local/lib/systemd/system/seven-control-location-agent.timer
+"${sudo_cmd[@]}" install -m 0644 "$tool_root/location/seven-control-location-server.service" /usr/local/lib/systemd/system/seven-control-location-server.service
 "${sudo_cmd[@]}" install -m 0644 "$tool_root/desktop/seven-control-master.desktop" /usr/local/share/applications/seven-control-master.desktop
 "${sudo_cmd[@]}" install -m 0644 "$tool_root/desktop/seven-control-configurator.desktop" /usr/local/share/applications/seven-control-configurator.desktop
 
@@ -54,20 +63,26 @@ fi
 "${sudo_cmd[@]}" ln -sf "$prefix/import-inventory.sh" /usr/local/bin/seven-control-import-inventory
 "${sudo_cmd[@]}" ln -sf "$prefix/apply-profile.sh" /usr/local/bin/seven-control-apply-profile
 "${sudo_cmd[@]}" ln -sf "$prefix/validate-inventory.sh" /usr/local/bin/seven-control-validate-inventory
+"${sudo_cmd[@]}" ln -sf "$prefix/locate-machine.sh" /usr/local/bin/seven-control-locate
 "${sudo_cmd[@]}" ln -sf "$prefix/health-check.sh" /usr/local/bin/seven-control-health-check
 "${sudo_cmd[@]}" ln -sf "$prefix/backup-config.sh" /usr/local/bin/seven-control-backup-config
 "${sudo_cmd[@]}" ln -sf "$prefix/launch-veyon-gui.sh" /usr/local/bin/seven-control-master
 "${sudo_cmd[@]}" ln -sf "$prefix/launch-veyon-gui.sh" /usr/local/bin/seven-control-configurator
+"${sudo_cmd[@]}" ln -sf "$prefix/location/seven_control_location_agent.py" /usr/local/bin/seven-control-location-agent
+"${sudo_cmd[@]}" ln -sf "$prefix/location/seven_control_location_server.py" /usr/local/bin/seven-control-location-server
 
 for legacy_command in \
 	simplon-lock \
 	simplon-import-inventory \
 	simplon-apply-profile \
 	simplon-validate-inventory \
+	simplon-locate \
 	simplon-health-check \
 	simplon-backup-config \
 	simplon-veyon-master \
-	simplon-veyon-configurator
+	simplon-veyon-configurator \
+	simplon-location-agent \
+	simplon-location-server
 do
 	if [ -L "/usr/local/bin/$legacy_command" ]; then
 		"${sudo_cmd[@]}" rm -f "/usr/local/bin/$legacy_command"
@@ -80,4 +95,4 @@ if ! /usr/local/bin/seven-control-configurator --version | grep -q 'admin-waylan
 fi
 
 printf 'Outils Seven Control installes dans %s.\n' "$prefix"
-printf 'Commandes disponibles: seven-control-lock, seven-control-import-inventory, seven-control-apply-profile, seven-control-validate-inventory, seven-control-health-check, seven-control-backup-config, seven-control-master, seven-control-configurator\n'
+printf 'Commandes disponibles: seven-control-lock, seven-control-import-inventory, seven-control-apply-profile, seven-control-validate-inventory, seven-control-locate, seven-control-health-check, seven-control-backup-config, seven-control-master, seven-control-configurator, seven-control-location-agent, seven-control-location-server\n'

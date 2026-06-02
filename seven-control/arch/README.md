@@ -12,6 +12,8 @@ Depuis la racine du depot:
 
 Le script installe les dependances CMake, Qt6, VNC, X11, PAM, LDAP et QCA necessaires au build.
 
+Il installe aussi `networkmanager` et `gpsd` pour Seven Control Location. `networkmanager` permet de relever les informations Wi-Fi via `nmcli`; `gpsd` permet de lire une position GPS si la machine possede un recepteur compatible.
+
 Pour l'interface graphique Qt sur Arch/sevenOS, le paquet `xcb-util-cursor` est egalement installe. Sans lui, Qt peut afficher une erreur du type `Could not load the Qt platform plugin "xcb"`.
 
 ## 2. Recuperer les sous-modules
@@ -70,6 +72,8 @@ Cela installe:
 - `/opt/seven-control`;
 - `/usr/local/bin/seven-control-lock`;
 - `/usr/local/bin/seven-control-import-inventory`.
+- `/usr/local/bin/seven-control-location-agent`;
+- `/usr/local/bin/seven-control-location-server`.
 
 ## 5. Activer le service sur un poste apprenant
 

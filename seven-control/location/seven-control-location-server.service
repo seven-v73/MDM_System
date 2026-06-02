@@ -1,0 +1,15 @@
+[Unit]
+Description=Seven Control Location Server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/seven-control/location-server.env
+ExecStart=/usr/local/bin/seven-control-location-server
+Restart=on-failure
+DynamicUser=yes
+StateDirectory=seven-control-location
+
+[Install]
+WantedBy=multi-user.target

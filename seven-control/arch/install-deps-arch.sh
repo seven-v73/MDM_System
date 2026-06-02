@@ -45,6 +45,8 @@ packages=(
 	libxcb
 	xcb-util-cursor
 	libglvnd
+	networkmanager
+	gpsd
 )
 
 "${sudo_cmd[@]}" pacman -S --needed "${packages[@]}"
